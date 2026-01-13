@@ -25,10 +25,12 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { extractPageSlugId, getPageIcon } from "@/lib";
 import { useTranslation } from "react-i18next";
+import { usePageQuery } from "@/features/page/queries/page-query.ts";
 import CopyTextButton from "@/components/common/copy.tsx";
 import { getAppUrl, isCloud } from "@/lib/config.ts";
 import { buildPageUrl } from "@/features/page/page.utils.ts";
 import classes from "@/features/share/components/share.module.css";
+
 
 interface ShareModalProps {
   readOnly: boolean;
@@ -37,7 +39,9 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pageSlug } = useParams();
-  const pageId = extractPageSlugId(pageSlug);
+  const pageSlugId = extractPageSlugId(pageSlug);
+  const { data: page } = usePageQuery({ pageId: pageSlugId });
+  const pageId = page?.id;
   const { data: share } = useShareForPageQuery(pageId);
   const { spaceSlug } = useParams();
   const createShareMutation = useCreateShareMutation();
