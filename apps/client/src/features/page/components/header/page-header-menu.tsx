@@ -7,6 +7,7 @@ import {
   IconHistory,
   IconLink,
   IconList,
+  IconMarkdown,
   IconMessage,
   IconPrinter,
   IconReplace,
@@ -30,6 +31,7 @@ import { useDeletePageModal } from "@/features/page/hooks/use-delete-page-modal.
 import { PageWidthToggle } from "@/features/user/components/page-width-pref.tsx";
 import { Trans, useTranslation } from "react-i18next";
 import ExportModal from "@/components/common/export-modal";
+import { htmlToMarkdown } from "@docmost/editor-ext";
 import {
   pageEditorAtom,
   yjsConnectionStatusAtom,
@@ -147,6 +149,15 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
     notifications.show({ message: t("Link copied") });
   };
 
+  const handleCopyAsMarkdown = () => {
+    if (!pageEditor) return;
+    const html = pageEditor.getHTML();
+    const markdown = htmlToMarkdown(html);
+    const title = page?.title ? `# ${page.title}\n\n` : "";
+    clipboard.copy(`${title}${markdown}`);
+    notifications.show({ message: t("Copied") });
+  };
+
   const handlePrint = () => {
     setTimeout(() => {
       window.print();
@@ -193,6 +204,13 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             onClick={handleCopyLink}
           >
             {t("Copy link")}
+          </Menu.Item>
+
+          <Menu.Item
+            leftSection={<IconMarkdown size={16} />}
+            onClick={handleCopyAsMarkdown}
+          >
+            {t("Copy as Markdown")}
           </Menu.Item>
 
           <Menu.Divider />
