@@ -1,19 +1,16 @@
 import { StarterKit } from "@tiptap/starter-kit";
-import { Placeholder } from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
-import { TaskList } from "@tiptap/extension-task-list";
-import { ListKeymap } from "@tiptap/extension-list-keymap";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { Underline } from "@tiptap/extension-underline";
+import { TaskList, TaskItem } from "@tiptap/extension-list";
+import { Placeholder, CharacterCount } from "@tiptap/extensions";
 import { Superscript } from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
-import { Highlight } from "@tiptap/extension-highlight";
+
 import { Typography } from "@tiptap/extension-typography";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import SlashCommand from "@/features/editor/extensions/slash-command";
 import { Collaboration, isChangeOrigin } from "@tiptap/extension-collaboration";
-import { CollaborationCursor } from "@tiptap/extension-collaboration-cursor";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import {
   Comment,
@@ -42,11 +39,15 @@ import {
   Embed,
   SearchAndReplace,
   Mention,
-  Subpages,
   TableDndExtension,
   ExtraLigatures,
   ColumnContainer,
   Column,
+  Subpages,
+  Heading,
+  Highlight,
+  UniqueID,
+  SharedStorage,
 } from "@docmost/editor-ext";
 import {
   randomElement,
@@ -86,9 +87,7 @@ import MentionView from "@/features/editor/components/mention/mention-view.tsx";
 import i18n from "@/i18n.ts";
 import { MarkdownClipboard } from "@/features/editor/extensions/markdown-clipboard.ts";
 import EmojiCommand from "./emoji-command";
-import { CharacterCount } from "@tiptap/extension-character-count";
-import Heading, { Level } from "@tiptap/extension-heading";
-import HeadingView from "../components/heading/heading-view";
+
 import { countWords } from "alfaaz";
 import ColumnContainerView from "@/features/editor/components/column-layout/column-container-view";
 import ColumnView from "@/features/editor/components/column-layout/column-view";
@@ -107,7 +106,10 @@ lowlight.register("scala", scala);
 
 export const mainExtensions = [
   StarterKit.configure({
-    history: false,
+    heading: false,
+    undoRedo: false,
+    link: false,
+    trailingNode: false,
     dropcursor: {
       width: 3,
       color: "#70CFF8",
@@ -118,20 +120,12 @@ export const mainExtensions = [
         spellcheck: false,
       },
     },
-    heading: false,
   }),
-  Heading.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        levels: [1, 2, 3, 4, 5, 6] as Level[],
-      };
-    },
-    addNodeView() {
-      return ReactNodeViewRenderer(HeadingView);
-    },
-  }).configure({
-    levels: [1, 2, 3, 4, 5, 6],
+  SharedStorage,
+  Heading,
+  UniqueID.configure({
+    types: ["heading", "paragraph"],
+    filterTransaction: (transaction) => !isChangeOrigin(transaction),
   }),
   Placeholder.configure({
     placeholder: ({ node }) => {
@@ -153,8 +147,6 @@ export const mainExtensions = [
   TaskItem.configure({
     nested: true,
   }),
-  ListKeymap,
-  Underline,
   LinkExtension.configure({
     openOnClick: false,
   }),
@@ -190,6 +182,9 @@ export const mainExtensions = [
     },
   }).extend({
     addNodeView() {
+      // Force the react node view to render immediately using flush sync (https://github.com/ueberdosis/tiptap/blob/b4db352f839e1d82f9add6ee7fb45561336286d8/packages/react/src/ReactRenderer.tsx#L183-L191)
+      this.editor.isInitialized = true;
+
       return ReactNodeViewRenderer(MentionView);
     },
   }),
@@ -240,6 +235,7 @@ export const mainExtensions = [
   }),
   CustomCodeBlock.configure({
     view: CodeBlockView,
+    //@ts-ignore
     lowlight,
     HTMLAttributes: {
       spellcheck: false,
@@ -297,7 +293,7 @@ export const mainExtensions = [
         Escape: () => {
           const event = new CustomEvent("closeFindDialogFromEditor", {});
           document.dispatchEvent(event);
-          return true;
+          return false;
         },
       };
     },
@@ -309,8 +305,9 @@ type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
 export const collabExtensions: CollabExtensions = (provider, user) => [
   Collaboration.configure({
     document: provider.document,
+    provider,
   }),
-  CollaborationCursor.configure({
+  CollaborationCaret.configure({
     provider,
     user: {
       name: user.name,

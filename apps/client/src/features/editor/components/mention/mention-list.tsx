@@ -194,7 +194,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
   const enterHandler = () => {
     if (!renderItems.length) return;
-    if (renderItems[selectedIndex].entityType !== "header") {
+    if (renderItems[selectedIndex]?.entityType !== "header") {
       selectItem(selectedIndex);
     }
   };

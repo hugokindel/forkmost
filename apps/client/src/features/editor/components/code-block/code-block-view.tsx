@@ -246,6 +246,7 @@ export default function CodeBlockView(props: NodeViewProps) {
             </Tooltip>
           </div>
         )}
+        {/* @ts-ignore */}
         <NodeViewContent as="code" className={`language-${language}`} ref={codeRef} />
       </pre>
 
