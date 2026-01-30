@@ -19,7 +19,6 @@ import { User } from '@docmost/db/types/entity.types';
 import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
-import { PaginationResult } from '@docmost/db/pagination/pagination';
 import { UpdateWorkspaceUserRoleDto } from '../dto/update-workspace-user-role.dto';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { EnvironmentService } from '../../../integrations/environment/environment.service';
@@ -28,7 +27,6 @@ import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { addDays } from 'date-fns';
 import { DISALLOWED_HOSTNAMES, WorkspaceStatus } from '../workspace.constants';
 import { v4 } from 'uuid';
-import { AttachmentType } from 'src/core/attachment/attachment.constants';
 import { InjectQueue } from '@nestjs/bullmq';
 import { QueueJob, QueueName } from '../../../integrations/queue/constants';
 import { Queue } from 'bullmq';
@@ -39,6 +37,7 @@ import ChangePasswordEmail from '@docmost/transactional/emails/change-password-e
 import ChangeUserPasswordEmail from '@docmost/transactional/emails/change-user-password-email';
 import { MailService } from '../../../integrations/mail/mail.service';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
 
 @Injectable()
 export class WorkspaceService {
@@ -385,18 +384,11 @@ export class WorkspaceService {
     @AuthUser() user: User,
     workspaceId: string,
     pagination: PaginationOptions,
-  ): Promise<PaginationResult<User>> {
-    const users = (user.role === 'owner' || user.role === 'admin') ?
-      await this.userRepo.getUsersPaginated(
-      workspaceId,
-      pagination,
-    ) : await this.userRepo.getUsersInSpacesOfUser(
-      workspaceId,
-      user.id,
-      pagination,
-    );
-
-    return users;
+  ): Promise<CursorPaginationResult<User>> {
+    if (user.role === 'owner' || user.role === 'admin') {
+      return this.userRepo.getUsersPaginated(workspaceId, pagination);
+    }
+    return this.userRepo.getUsersInSpacesOfUser(workspaceId, user.id, pagination);
   }
 
   async updateWorkspaceUserRole(

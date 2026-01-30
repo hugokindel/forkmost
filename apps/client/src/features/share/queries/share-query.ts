@@ -36,7 +36,7 @@ export function useGetSharesQuery(
   params?: QueryParams,
 ): UseQueryResult<IPagination<ISharedItem>, Error> {
   return useQuery({
-    queryKey: ["share-list"],
+    queryKey: ["share-list", params],
     queryFn: () => getShares(params),
     placeholderData: keepPreviousData,
   });
