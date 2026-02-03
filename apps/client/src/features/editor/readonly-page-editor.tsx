@@ -3,13 +3,12 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { EditorProvider } from "@tiptap/react";
 import { mainExtensions } from "@/features/editor/extensions/extensions";
 import { Document } from "@tiptap/extension-document";
-import { generateNodeId } from "@docmost/editor-ext";
+import { Heading, UniqueID } from "@docmost/editor-ext";
 import { Text } from "@tiptap/extension-text";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { useAtom } from "jotai";
 import { readOnlyEditorAtom } from "@/features/editor/atoms/editor-atoms.ts";
 import { useEditorScroll } from "./hooks/use-editor-scroll";
-import Heading from "@tiptap/extension-heading";
 
 interface PageEditorProps {
   title: string;
@@ -40,15 +39,25 @@ export default function ReadonlyPageEditor({
   }, []);
 
   const extensions = useMemo(() => {
-    return [...mainExtensions];
+    const filteredExtensions = mainExtensions.filter(
+      (ext) => ext.name !== "uniqueID",
+    );
+
+    return [
+      ...filteredExtensions,
+      UniqueID.configure({
+        types: ["heading", "paragraph"],
+        updateDocument: false,
+      }),
+    ];
   }, []);
 
   const titleExtensions = [
     Document.extend({
       content: "heading",
     }),
-    Text,
     Heading,
+    Text,
     Placeholder.configure({
       placeholder: "Untitled",
       showOnlyWhenEditable: false,
