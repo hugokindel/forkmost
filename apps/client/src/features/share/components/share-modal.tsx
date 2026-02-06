@@ -30,7 +30,9 @@ import CopyTextButton from "@/components/common/copy.tsx";
 import { getAppUrl, isCloud } from "@/lib/config.ts";
 import { buildPageUrl } from "@/features/page/page.utils.ts";
 import classes from "@/features/share/components/share.module.css";
-
+import { useAtom } from "jotai";
+import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
+import { useSpaceQuery } from "@/features/space/queries/space-query.ts";
 
 interface ShareModalProps {
   readOnly: boolean;
@@ -44,6 +46,12 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
   const pageId = page?.id;
   const { data: share } = useShareForPageQuery(pageId);
   const { spaceSlug } = useParams();
+  const [workspace] = useAtom(workspaceAtom);
+  const { data: space } = useSpaceQuery(spaceSlug);
+  const workspaceDisabled =
+    workspace?.settings?.sharing?.disabled === true;
+  const spaceDisabled = space?.settings?.sharing?.disabled === true;
+  const sharingDisabled = workspaceDisabled || spaceDisabled;
   const createShareMutation = useCreateShareMutation();
   const updateShareMutation = useUpdateShareMutation();
   const deleteShareMutation = useDeleteShareMutation();
@@ -166,7 +174,21 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
         </Button>
       </Popover.Target>
       <Popover.Dropdown style={{ userSelect: "none" }}>
-        {isDescendantShared ? (
+        {sharingDisabled ? (
+          <>
+            <Group justify="center" mb="sm">
+              <IconLock size={20} stroke={1.5} />
+            </Group>
+            <Text size="sm" ta="center" fw={500} mb="xs">
+              {t("Public sharing is disabled")}
+            </Text>
+            <Text size="sm" c="dimmed" ta="center">
+              {workspaceDisabled
+                ? t("Public sharing has been disabled at the workspace level.")
+                : t("Public sharing has been disabled for this space.")}
+            </Text>
+          </>
+        ) : isDescendantShared ? (
           <>
             <Text size="sm">{t("Inherits public sharing from")}</Text>
             <Anchor

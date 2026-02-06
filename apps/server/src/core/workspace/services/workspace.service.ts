@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { LicenseCheckService } from '../../../integrations/environment/license-check.service';
 import { CreateWorkspaceDto } from '../dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from '../dto/update-workspace.dto';
 import { SpaceService } from '../../space/services/space.service';
@@ -38,6 +39,7 @@ import ChangeUserPasswordEmail from '@docmost/transactional/emails/change-user-p
 import { MailService } from '../../../integrations/mail/mail.service';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
+import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 
 @Injectable()
 export class WorkspaceService {
@@ -53,6 +55,8 @@ export class WorkspaceService {
     private environmentService: EnvironmentService,
     private domainService: DomainService,
     private mailService: MailService,
+    private licenseCheckService: LicenseCheckService,
+    private shareRepo: ShareRepo,
     @InjectKysely() private readonly db: KyselyDB,
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
     @InjectQueue(QueueName.BILLING_QUEUE) private billingQueue: Queue,
@@ -364,6 +368,32 @@ export class WorkspaceService {
         updateWorkspaceDto.generativeAi,
       );
       delete updateWorkspaceDto.generativeAi;
+    }
+
+    if (typeof updateWorkspaceDto.disablePublicSharing !== 'undefined') {
+      const currentWorkspace = await this.workspaceRepo.findById(workspaceId, {
+        withLicenseKey: true,
+      });
+
+      if (
+        !this.licenseCheckService.isValidEELicense(currentWorkspace.licenseKey)
+      ) {
+        throw new ForbiddenException(
+          'This feature requires a valid enterprise license',
+        );
+      }
+
+      await this.workspaceRepo.updateSharingSettings(
+        workspaceId,
+        'disabled',
+        updateWorkspaceDto.disablePublicSharing,
+      );
+
+      if (updateWorkspaceDto.disablePublicSharing) {
+        await this.shareRepo.deleteByWorkspaceId(workspaceId);
+      }
+
+      delete updateWorkspaceDto.disablePublicSharing;
     }
 
     await this.workspaceRepo.updateWorkspace(updateWorkspaceDto, workspaceId);
