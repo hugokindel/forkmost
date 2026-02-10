@@ -478,7 +478,8 @@ export class AttachmentController {
       'Cache-Control': `${cacheScope}, max-age=3600`,
     });
 
-    if (fileSize) {
+    const isSvg = attachment.fileExt === '.svg';
+    if (fileSize && !isSvg) {
       res.header('Content-Length', fileSize);
     }
 
