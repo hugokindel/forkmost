@@ -40,6 +40,7 @@ import { MailService } from '../../../integrations/mail/mail.service';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
+import { WatcherRepo } from '@docmost/db/repos/watcher/watcher.repo';
 
 @Injectable()
 export class WorkspaceService {
@@ -57,6 +58,7 @@ export class WorkspaceService {
     private mailService: MailService,
     private licenseCheckService: LicenseCheckService,
     private shareRepo: ShareRepo,
+    private watcherRepo: WatcherRepo,
     @InjectKysely() private readonly db: KyselyDB,
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
     @InjectQueue(QueueName.BILLING_QUEUE) private billingQueue: Queue,
@@ -565,6 +567,10 @@ export class WorkspaceService {
         .deleteFrom('authAccounts')
         .where('userId', '=', userId)
         .execute();
+
+      await this.watcherRepo.deleteByUserAndWorkspace(userId, workspaceId, {
+        trx,
+      });
     });
 
     try {
