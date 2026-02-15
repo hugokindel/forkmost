@@ -78,7 +78,7 @@ const groupedData: DataGroup[] = [
         icon: IconShield,
         path: "/settings/oidc",
         isSelfhosted: true,
-        isAdmin: true
+        isAdmin: true,
       },
     ],
   },

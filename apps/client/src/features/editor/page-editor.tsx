@@ -71,6 +71,7 @@ import { jwtDecode } from "jwt-decode";
 import { searchSpotlight } from '@/features/search/constants.ts';
 import { useAnchorScroll } from "./components/heading/use-anchor-scroll";
 import { useEditorScroll } from "./hooks/use-editor-scroll";
+import { EditorAiMenu } from "@/ee/ai/components/editor/ai-menu/ai-menu";
 
 interface PageEditorProps {
   pageId: string;
@@ -421,6 +422,7 @@ export default function PageEditor({
 
         {editor && editorIsEditable && (
           <div>
+            <EditorAiMenu editor={editor} />
             <EditorBubbleMenu editor={editor} />
             <EmbedMenu editor={editor} />
             <TableMenu editor={editor} />

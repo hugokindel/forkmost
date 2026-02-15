@@ -125,6 +125,7 @@ export class WorkspaceService {
         let status = undefined;
         let plan = undefined;
         let billingEmail = undefined;
+        let settings = undefined;
 
         if (this.environmentService.isCloud()) {
           // generate unique hostname
@@ -138,6 +139,7 @@ export class WorkspaceService {
           status = WorkspaceStatus.Active;
           plan = 'standard';
           billingEmail = user.email;
+          settings = { ai: { generative: true } };
         }
 
         // create workspace
@@ -150,6 +152,7 @@ export class WorkspaceService {
             trialEndAt,
             plan,
             billingEmail,
+            settings,
           },
           trx,
         );
