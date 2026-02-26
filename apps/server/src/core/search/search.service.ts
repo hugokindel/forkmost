@@ -10,6 +10,7 @@ import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { DB } from '@docmost/db/types/db';
 import { extractHeadingsFromContent } from './utils/heading-extractor';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const tsquery = require('pg-tsquery')();
@@ -22,6 +23,7 @@ export class SearchService {
     private shareRepo: ShareRepo,
     private spaceMemberRepo: SpaceMemberRepo,
     private userRepo: UserRepo,
+    private pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   async searchPage(
@@ -119,10 +121,23 @@ export class SearchService {
     }
 
     //@ts-ignore
-    queryResults = await queryResults.execute();
+    let results: any[] = await queryResults.execute();
+
+    // Filter results by page-level permissions (if user is authenticated)
+    if (opts.userId && results.length > 0) {
+      const pageIds = results.map((r: any) => r.id);
+      const accessibleIds =
+        await this.pagePermissionRepo.filterAccessiblePageIds({
+          pageIds,
+          userId: opts.userId,
+          spaceId: searchParams.spaceId,
+        });
+      const accessibleSet = new Set(accessibleIds);
+      results = results.filter((r: any) => accessibleSet.has(r.id));
+    }
 
     //@ts-ignore
-    const searchResults = queryResults.map((result: SearchResponseDto) => {
+    const searchResults = results.map((result: SearchResponseDto) => {
       if (result.highlight) {
         result.highlight = result.highlight
           .replace(/\r\n|\r|\n/g, ' ')
@@ -280,6 +295,19 @@ export class SearchService {
             [],
           headings: extractHeadingsFromContent(page.content),
         }));
+      }
+
+      // Filter by page-level permissions
+      if (pages.length > 0) {
+        const pageIds = pages.map((p) => p.id);
+        const accessibleIds =
+          await this.pagePermissionRepo.filterAccessiblePageIds({
+            pageIds,
+            userId,
+            spaceId: suggestion?.spaceId,
+          });
+        const accessibleSet = new Set(accessibleIds);
+        pages = pages.filter((p) => accessibleSet.has(p.id));
       }
     }
 
