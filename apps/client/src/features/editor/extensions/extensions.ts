@@ -52,6 +52,7 @@ import {
   SharedStorage,
   Columns,
   Column,
+  Status
 } from "@docmost/editor-ext";
 import {
   randomElement,
@@ -72,7 +73,11 @@ import {
   createResizeHandle,
   buildResizeClasses,
 } from "@/features/editor/components/common/node-resize-handles.ts";
+import MathInlineView from "@/features/editor/components/math/math-inline.tsx";
+import MathBlockView from "@/features/editor/components/math/math-block.tsx";
+import ImageView from "@/features/editor/components/image/image-view.tsx";
 import CalloutView from "@/features/editor/components/callout/callout-view.tsx";
+import StatusView from "@/features/editor/components/status/status-view.tsx";
 import VideoView from "@/features/editor/components/video/video-view.tsx";
 import PdfView from "@/features/editor/components/pdf/pdf-view.tsx";
 import AudioView from "@/features/editor/components/audio/audio-view.tsx";
@@ -334,6 +339,9 @@ export const mainExtensions = [
   }),
   Subpages.configure({
     view: SubpagesView,
+  }),
+  Status.configure({
+    view: StatusView,
   }),
   MarkdownClipboard.configure({
     transformPastedText: true,

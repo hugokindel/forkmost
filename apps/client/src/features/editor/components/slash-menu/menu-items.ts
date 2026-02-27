@@ -29,6 +29,7 @@ import {
   IconFileTypePdf,
   IconColumns3,
   IconColumns2,
+  IconTag,
 } from "@tabler/icons-react";
 
 import {
@@ -505,6 +506,20 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .focus()
           .deleteRange(range)
           .insertContent(currentDate)
+          .run();
+      },
+    },
+    {
+      title: "Status",
+      description: "Insert inline status badge.",
+      searchTerms: ["status", "badge", "label", "lozenge"],
+      icon: IconTag,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setStatus({ text: "", color: "gray" })
           .run();
       },
     },
