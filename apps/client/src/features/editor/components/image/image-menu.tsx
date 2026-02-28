@@ -167,32 +167,32 @@ export function ImageMenu({ editor }: EditorMenuProps) {
       shouldShow={shouldShow}
     >
       <div className={classes.toolbar}>
-        <Tooltip position="top" label={t("Float left")}>
-          <ActionIcon
-            onClick={alignImageFloatLeft}
-            size="lg"
-            aria-label={t("Float left")}
-            variant="subtle"
-            className={clsx({
-              [classes.active]: editor.isActive("image", { align: "floatLeft" }),
-            })}
-          >
-            <IconBoxAlignLeftFilled size={18} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip position="top" label={t("Align left")}>
-          <ActionIcon
-            onClick={alignImageLeft}
-            size="lg"
-            aria-label={t("Align left")}
-            variant="subtle"
-            className={clsx({ [classes.active]: editorState?.isAlignLeft })}
-          >
-            <IconLayoutAlignLeft size={18} />
-          </ActionIcon>
-        </Tooltip>
+         <Tooltip position="top" label={t("Float left")}>
+           <ActionIcon
+             onClick={alignImageFloatLeft}
+             size="lg"
+             aria-label={t("Float left")}
+             variant="subtle"
+             className={clsx({
+               [classes.active]: editor.isActive("image", { align: "floatLeft" }),
+             })}
+           >
+             <IconBoxAlignLeftFilled size={18} />
+           </ActionIcon>
+         </Tooltip>
+         <Tooltip position="top" label={t("Align left")} withinPortal={false}>
+           <ActionIcon
+             onClick={alignImageLeft}
+             size="lg"
+             aria-label={t("Align left")}
+             variant="subtle"
+             className={clsx({ [classes.active]: editorState?.isAlignLeft })}
+           >
+             <IconLayoutAlignLeft size={18} />
+           </ActionIcon>
+         </Tooltip>
 
-        <Tooltip position="top" label={t("Align center")}>
+        <Tooltip position="top" label={t("Align center")} withinPortal={false}>
           <ActionIcon
             onClick={alignImageCenter}
             size="lg"
@@ -204,7 +204,7 @@ export function ImageMenu({ editor }: EditorMenuProps) {
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Align right")}>
+        <Tooltip position="top" label={t("Align right")} withinPortal={false}>
           <ActionIcon
             onClick={alignImageRight}
             size="lg"
@@ -231,7 +231,7 @@ export function ImageMenu({ editor }: EditorMenuProps) {
 
         <div className={classes.divider} />
 
-        <Tooltip position="top" label={t("Download")}>
+        <Tooltip position="top" label={t("Download")} withinPortal={false}>
           <ActionIcon
             onClick={handleDownload}
             size="lg"
@@ -242,7 +242,7 @@ export function ImageMenu({ editor }: EditorMenuProps) {
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Replace image")}>
+        <Tooltip position="top" label={t("Replace image")} withinPortal={false}>
           <ActionIcon
             onClick={handleReplace}
             size="lg"
@@ -253,7 +253,7 @@ export function ImageMenu({ editor }: EditorMenuProps) {
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Delete")}>
+        <Tooltip position="top" label={t("Delete")} withinPortal={false}>
           <ActionIcon
             onClick={handleDelete}
             size="lg"
