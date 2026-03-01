@@ -106,7 +106,7 @@ const mentionRenderItems = () => {
               left: `${x}px`,
               top: `${y}px`,
               position: "absolute",
-              zIndex: "100",
+              zIndex: "190",
             });
           });
         },

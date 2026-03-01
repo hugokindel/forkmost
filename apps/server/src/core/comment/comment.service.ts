@@ -66,8 +66,8 @@ export class CommentService {
     const comment = await this.commentRepo.insertComment({
       pageId: page.id,
       content: commentContent,
-      selection: createCommentDto?.selection?.substring(0, 250),
-      type: 'inline',
+      selection: createCommentDto?.selection?.substring(0, 250) ?? null,
+      type: createCommentDto.type ?? 'page',
       parentCommentId: createCommentDto?.parentCommentId,
       creatorId: userId,
       workspaceId: workspaceId,

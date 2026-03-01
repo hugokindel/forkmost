@@ -56,6 +56,7 @@ function CommentDialog({ editor, pageId }: CommentDialogProps) {
         pageId: pageId,
         content: JSON.stringify(comment),
         selection: selectedText,
+        type: "inline",
       };
 
       const createdComment =
@@ -103,6 +104,7 @@ function CommentDialog({ editor, pageId }: CommentDialogProps) {
       size="lg"
       radius="md"
       w={300}
+      zIndex={180}
       position={{ bottom: 500, right: 50 }}
       withCloseButton
       withBorder
