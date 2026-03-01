@@ -68,14 +68,14 @@ const groupedData: DataGroup[] = [
       },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
-      { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
-      {
-        label: "OIDC/SSO",
-        icon: IconShield,
-        path: "/settings/oidc",
-        isSelfhosted: true,
-        isAdmin: true,
-      },
+       { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
+       {
+         label: "OIDC/SSO",
+         icon: IconShield,
+         path: "/settings/oidc",
+         isSelfhosted: true,
+         isAdmin: true,
+       },
     ],
   },
 ];

@@ -336,7 +336,8 @@ export class WorkspaceService {
 
     if (
       typeof updateWorkspaceDto.disablePublicSharing !== 'undefined' ||
-      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined'
+      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined' ||
+      typeof updateWorkspaceDto.mcpEnabled !== 'undefined'
     ) {
       const ws = await this.db
         .selectFrom('workspaces')
@@ -434,10 +435,25 @@ export class WorkspaceService {
         }
       }
 
+      if (typeof updateWorkspaceDto.mcpEnabled !== 'undefined') {
+        const prev = settingsBefore?.ai?.mcp ?? false;
+        if (prev !== updateWorkspaceDto.mcpEnabled) {
+          before.mcpEnabled = prev;
+          after.mcpEnabled = updateWorkspaceDto.mcpEnabled;
+        }
+        await this.workspaceRepo.updateAiSettings(
+          workspaceId,
+          'mcp',
+          updateWorkspaceDto.mcpEnabled,
+          trx,
+        );
+      }
+
       delete updateWorkspaceDto.restrictApiToAdmins;
       delete updateWorkspaceDto.aiSearch;
       delete updateWorkspaceDto.generativeAi;
       delete updateWorkspaceDto.disablePublicSharing;
+      delete updateWorkspaceDto.mcpEnabled;
 
       await this.workspaceRepo.updateWorkspace(
         updateWorkspaceDto,
