@@ -61,17 +61,23 @@ export default function MentionView(props: NodeViewProps) {
         </Text>
       )}
 
-      {entityType === "page" && (
-        <Anchor
-          component={Link}
-          fw={500}
-          to={
-            isShareRoute ? shareSlugUrl : pageUrl
-          }
-          onClick={handleClick}
-          underline="never"
-          className={classes.pageMentionLink}
-        >
+      {entityType === "page" && isError && (
+        <Text component="span" c="dimmed" size="sm">
+          {label}
+        </Text>
+      )}
+
+       {entityType === "page" && !isError && (
+         <Anchor
+           component={Link}
+           fw={500}
+           to={
+             isShareRoute ? shareSlugUrl : buildPageUrl(page?.space?.slug || spaceSlug, slugId, page?.title || label, anchorSlug)
+           }
+           onClick={handleClick}
+           underline="never"
+           className={classes.pageMentionLink}
+         >
           {page?.icon ? (
             <span style={{ marginRight: "4px" }}>{page.icon}</span>
           ) : (

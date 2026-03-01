@@ -41,6 +41,7 @@ import { useQueryEmit } from "@/features/websocket/use-query-emit";
 import { extractPageSlugId } from "@/lib";
 import { AnchorSelector } from "./anchor-selector";
 import { generateSlug } from "../../utils/heading-extractor";
+import { AutoTooltipText } from "@/components/ui/auto-tooltip-text.tsx";
 
 const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(1);
@@ -62,11 +63,11 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     includeUsers: true,
     includePages: true,
     spaceId: space.id,
-    limit: 10,
+    limit: props.query ? 10 : 5,
     preload: true,
   });
 
-  const createPageItem = (label: string) : MentionSuggestionItem => {
+  const createPageItem = (label: string): MentionSuggestionItem => {
     return {
       id: null,
       label: label,
@@ -75,15 +76,15 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       entityId: null,
       slugId: null,
       icon: null,
-    }
-  }
+    };
+  };
 
   useEffect(() => {
     if (suggestion && !isLoading) {
       let items: MentionSuggestionItem[] = [];
 
       if (suggestion?.users?.length > 0) {
-        items.push({ entityType: "header", label: t("Users") });
+        items.push({ entityType: "header", label: t("People") });
 
         items = items.concat(
           suggestion.users.map((user) => ({
@@ -97,26 +98,28 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         );
       }
 
-      if (suggestion?.pages?.length > 0) {
-        items.push({ entityType: "header", label: t("Pages") });
-        items = items.concat(
-          suggestion.pages.map((page) => ({
-            id: uuid7(),
-            label: page.title || "Untitled",
-            breadcrumbs: page.breadcrumbs
-              .map(item => item ?? t("Untitled"))
-              .join(' / '),
-            entityType: "page",
-            entityId: page.id,
-            slugId: page.slugId,
-            icon: page.icon,
-            headings: (page.headings || []).map(heading => ({
-              ...heading,
-              slug: heading.slug || generateSlug(heading.text)
-            })),
-          })),
-        );
-      }
+       if (suggestion?.pages?.length > 0) {
+         items.push({ entityType: "header", label: t("Pages") });
+         items = items.concat(
+           suggestion.pages.map((page) => ({
+             id: uuid7(),
+             label: page.title || t("Untitled"),
+             breadcrumbs: page.breadcrumbs
+               .map(item => item ?? t("Untitled"))
+               .join(' / '),
+             entityType: "page",
+             entityId: page.id,
+             slugId: page.slugId,
+             icon: page.icon,
+             headings: (page.headings || []).map(heading => ({
+               ...heading,
+               slug: heading.slug || generateSlug(heading.text)
+             })),
+             spaceName: page.space?.name,
+             spaceSlug: page.space?.slug,
+           })),
+         );
+       }
       if (!isInCommentContext && props.query) {
         items.push(createPageItem(props.query));
       }
@@ -139,10 +142,10 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             creatorId: currentUser?.user.id,
           });
         }
-        if (item.entityType === "page" && item.id!==null) {
+        if (item.entityType === "page" && item.id !== null) {
           props.command({
             id: item.id,
-            label: item.label || "Untitled",
+            label: item.label || t("Untitled"),
             entityType: "page",
             entityId: item.entityId,
             slugId: item.slugId,
@@ -151,7 +154,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
           });
           invalidateGraph();
         }
-        if (item.entityType === "page" && item.id===null) {
+        if (item.entityType === "page" && item.id === null) {
           createPage(item.label);
         }
       }
@@ -233,12 +236,12 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     },
   }));
 
-  const createPage = async (title: string) => {
-    const payload = {
-      spaceId: space.id,
-      parentPageId: page.id || null,
-      title
-    };
+   const createPage = async (title: string) => {
+     const payload = {
+       spaceId: space.id,
+       parentPageId: page.id || null,
+       title: title,
+     };
 
     try {
       const createdPage = await createPageMutation.mutateAsync(payload);
@@ -267,17 +270,21 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         creatorId: currentUser?.user.id,
       });
 
-      setTimeout(() => {
-        emit({
-          operation: "addTreeNode",
-          spaceId: space.id,
-          payload: { parentId, index: lastIndex, data },
-        });
-      }, 50);
-    } catch {
-      throw new Error("Failed to create page");
-    }
-  }
+       setTimeout(() => {
+         emit({
+           operation: "addTreeNode",
+           spaceId: space.id,
+           payload: {
+             parentId,
+             index: lastIndex,
+             data,
+           },
+         });
+       }, 50);
+     } catch (err) {
+       throw new Error("Failed to create page");
+     }
+   };
 
   useEffect(() => {
     viewportRef.current
@@ -291,24 +298,29 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     return (
       <Paper id="mention" shadow="md" py="xs" withBorder radius="md">
         <Text c="dimmed" size="sm" px="sm">
-          { t("No results") }
+          {t("No results")}
         </Text>
       </Paper>
     );
   }
 
   const hasUsers = renderItems.some((item) => item.entityType === "user");
-  const hasPages = renderItems.some((item) => item.entityType === "page" && item.id !== null);
-  const createPageItemData = renderItems.find((item) => item.entityType === "page" && item.id === null);
+  const hasPages = renderItems.some(
+    (item) => item.entityType === "page" && item.id !== null,
+  );
+  const createPageItemData = renderItems.find(
+    (item) => item.entityType === "page" && item.id === null,
+  );
 
-  return (
-<<<<<<< HEAD
-    <Paper id="mention" shadow="md" withBorder radius="md" py={6} className={classes.mentionPanel}>
+   return (
+     <Paper id="mention" shadow="md" withBorder radius="md" py={6} className={classes.mentionPanel}>
       <ScrollArea.Autosize
         viewportRef={viewportRef}
         mah={350}
         w={popupWidth}
+        scrollbars={"y"}
         scrollbarSize={6}
+        styles={{ content: { minWidth: 0 } }}
       >
         {renderItems?.map((item, index) => {
           if (item.entityType === "header") {
@@ -324,6 +336,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                   pt={isFirst ? 2 : 4}
                   pb={4}
                   tt="uppercase"
+                  style={{ userSelect: "none" }}
                 >
                   {item.label}
                 </Text>
@@ -347,14 +360,15 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     name={item.label}
                   />
 
-                  <Stack gap="0">
-                    <Text size="sm" fw={500}>
-                      {item.label}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {item.email}
-                    </Text>
-                  </Stack>
+<<<<<<< HEAD
+                   <Stack gap="0">
+                     <Text size="sm" fw={500}>
+                       {item.label}
+                     </Text>
+                     <Text size="xs" c="dimmed">
+                       {item.email}
+                     </Text>
+                   </Stack>
                 </Group>
               </UnstyledButton>
             );
@@ -393,35 +407,41 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     )}
                   </ActionIcon>
 
-                  <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
-                    <Text size="sm" fw={500} truncate>
-                      {item.id
-                        ? item.label
-                        : t("Create page") + ": " + item.label}
-                    </Text>
-                    {item.breadcrumbs !== "" && (
-                      <Text size="xs" c="dimmed" lineClamp={1}>
-                        {item.breadcrumbs}
-                      </Text>
-                    )}
-                  </Stack>
+<<<<<<< HEAD
+                   <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
+                     <Text size="sm" fw={500} truncate>
+                       {item.id
+                         ? item.label
+                         : t("Create page") + ": " + item.label}
+                     </Text>
+                     {item.breadcrumbs !== "" && (
+                       <Text size="xs" c="dimmed" lineClamp={1}>
+                         {item.breadcrumbs}
+                       </Text>
+                     )}
+                     {item.spaceName && (
+                       <Text size="xs" c="dimmed" truncate>
+                         {item.spaceName}
+                       </Text>
+                     )}
+                   </Stack>
 
-                  {item.id &&
-                    item.entityId &&
-                    item.entityType === "page" &&
-                    item.headings && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        className={classes.anchorSelector}
-                      >
-                        <AnchorSelector
-                          headings={item.headings}
-                          onSelectAnchor={(anchorSlug, headingText) => {
-                            selectPageWithAnchor(item, anchorSlug, headingText);
-                          }}
-                        />
-                      </div>
-                    )}
+                   {item.id &&
+                     item.entityId &&
+                     item.entityType === "page" &&
+                     item.headings && (
+                       <div
+                         onClick={(e) => e.stopPropagation()}
+                         className={classes.anchorSelector}
+                       >
+                         <AnchorSelector
+                           headings={item.headings}
+                           onSelectAnchor={(anchorSlug, headingText) => {
+                             selectPageWithAnchor(item, anchorSlug, headingText);
+                           }}
+                         />
+                       </div>
+                     )}
                 </Group>
               </UnstyledButton>
             );
@@ -435,9 +455,12 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             {(hasUsers || hasPages) && <Divider my={6} />}
             <UnstyledButton
               data-item-index={renderItems.indexOf(createPageItemData)}
-              onClick={() => selectItem(renderItems.indexOf(createPageItemData))}
+              onClick={() =>
+                selectItem(renderItems.indexOf(createPageItemData))
+              }
               className={clsx(classes.menuBtn, {
-                [classes.selectedItem]: renderItems.indexOf(createPageItemData) === selectedIndex,
+                [classes.selectedItem]:
+                  renderItems.indexOf(createPageItemData) === selectedIndex,
               })}
               px="sm"
             >
@@ -451,7 +474,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                   <IconPlus size={16} stroke={1.5} />
                 </ActionIcon>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                   <Text size="sm" fw={500} truncate>
                     {t("Create page")}: {createPageItemData.label}
                   </Text>

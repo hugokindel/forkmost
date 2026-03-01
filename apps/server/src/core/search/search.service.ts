@@ -188,114 +188,120 @@ export class SearchService {
         .execute();
     }
 
-    if (suggestion.includePages) {
-      // get spaces the user has access to
-      const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(userId);
+     if (suggestion.includePages) {
+       // get spaces the user has access to
+       const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(userId);
 
-      // If the user has no access to any space we skip (See original here: https://github.com/Vito0912/forkmost/blob/232cea8cc97fc17ea08823bc613c2aafbfa74589/apps/server/src/core/search/search.service.ts#L161-L182)
-      if (userSpaceIds && userSpaceIds?.length > 0) {
-        // Just to prevent any unwanted problems
-        const maxDepth = 11;
+       // If the user has no access to any space we skip (See original here: https://github.com/Vito0912/forkmost/blob/232cea8cc97fc17ea08823bc613c2aafbfa74589/apps/server/src/core/search/search.service.ts#L161-L182)
+       if (userSpaceIds && userSpaceIds?.length > 0) {
+         // Just to prevent any unwanted problems
+         const maxDepth = 11;
 
-        const pageSearch = await this.db
-          .withRecursive('page_ancestors', (db) =>
-            db
-              .selectFrom('pages')
-              .select([
-                'id',
-                'title',
-                'parentPageId',
-                'id as rootid',
-                sql`1::int`.as('depth'),
-              ])
-              .where((eb) =>
-                eb(
-                  sql`LOWER(f_unaccent(pages.title))`,
-                  'like',
-                  sql`LOWER(f_unaccent(${`%${query}%`}))`,
-                ),
-              )
-              .where('workspaceId', '=', workspaceId)
-              .where('deletedAt', 'is', null)
-              .$if(
-                suggestion?.spaceId &&
-                  userSpaceIds.includes(suggestion.spaceId),
-                (qb) => qb.where('spaceId', '=', suggestion.spaceId),
-              )
-              .$if(
-                !userSpaceIds.includes(suggestion.spaceId) ||
-                  !suggestion?.spaceId,
-                (qb) => qb.where('spaceId', 'in', userSpaceIds),
-              )
-              .unionAll((db) =>
-                db
-                  .selectFrom('pages')
-                  .innerJoin(
-                    'page_ancestors as pa',
-                    'pa.parentPageId',
-                    'pages.id',
-                  )
-                  .select([
-                    'pages.id',
-                    'pages.title',
-                    'pages.parentPageId',
-                    'pa.rootid',
-                    sql`pa.depth + 1`.as('depth'),
-                  ])
-                  .where((eb) => eb('pa.depth', '<', maxDepth))
-                  .where('pages.workspaceId', '=', workspaceId)
-                  .where('pages.deletedAt', 'is', null),
-              ),
-          )
-          // Prewvents grouping by content
-          .with('page_data', (db) =>
-            db
-              .selectFrom('page_ancestors as pa')
-              .select([
-                'pa.rootid',
-                sql`json_agg(
-                  json_build_object('title', pa.title, 'id', pa.id) 
-                  ORDER BY pa.depth DESC
-                ) FILTER (WHERE pa.id != pa.rootid)`.as('breadcrumbs'),
-              ])
-              .groupBy('pa.rootid'),
-          )
-          .selectFrom('pages')
-          .innerJoin('page_data', 'page_data.rootid', 'pages.id')
-          .select([
-            'pages.id',
-            'pages.slugId',
-            'pages.title',
-            'pages.icon',
-            'pages.spaceId',
-            'pages.content',
-            'page_data.breadcrumbs',
-          ])
-          .where('pages.workspaceId', '=', workspaceId)
-          .where('pages.deletedAt', 'is', null)
-          .$if(
-            suggestion?.spaceId && userSpaceIds.includes(suggestion.spaceId),
-            (qb) => qb.where('pages.spaceId', '=', suggestion.spaceId),
-          )
-          .$if(
-            !userSpaceIds.includes(suggestion.spaceId) || !suggestion?.spaceId,
-            (qb) => qb.where('pages.spaceId', 'in', userSpaceIds),
-          )
-          .limit(limit)
-          .execute();
+         const pageSearch = await this.db
+           .withRecursive('page_ancestors', (db) =>
+             db
+               .selectFrom('pages')
+               .select([
+                 'id',
+                 'title',
+                 'parentPageId',
+                 'id as rootid',
+                 sql`1::int`.as('depth'),
+               ])
+               .where((eb) =>
+                 eb(
+                   sql`LOWER(f_unaccent(pages.title))`,
+                   'like',
+                   sql`LOWER(f_unaccent(${`%${query}%`}))`,
+                 ),
+               )
+               .where('workspaceId', '=', workspaceId)
+               .where('deletedAt', 'is', null)
+               .$if(
+                 suggestion?.spaceId &&
+                   userSpaceIds.includes(suggestion.spaceId),
+                 (qb) => qb.where('spaceId', '=', suggestion.spaceId),
+               )
+               .$if(
+                 !userSpaceIds.includes(suggestion.spaceId) ||
+                   !suggestion?.spaceId,
+                 (qb) => qb.where('spaceId', 'in', userSpaceIds),
+               )
+               .unionAll((db) =>
+                 db
+                   .selectFrom('pages')
+                   .innerJoin(
+                     'page_ancestors as pa',
+                     'pa.parentPageId',
+                     'pages.id',
+                   )
+                   .select([
+                     'pages.id',
+                     'pages.title',
+                     'pages.parentPageId',
+                     'pa.rootid',
+                     sql`pa.depth + 1`.as('depth'),
+                   ])
+                   .where((eb) => eb('pa.depth', '<', maxDepth))
+                   .where('pages.workspaceId', '=', workspaceId)
+                   .where('pages.deletedAt', 'is', null),
+               ),
+           )
+           // Prewvents grouping by content
+           .with('page_data', (db) =>
+             db
+               .selectFrom('page_ancestors as pa')
+               .select([
+                 'pa.rootid',
+                 sql`json_agg(
+                   json_build_object('title', pa.title, 'id', pa.id) 
+                   ORDER BY pa.depth DESC
+                 ) FILTER (WHERE pa.id != pa.rootid)`.as('breadcrumbs'),
+               ])
+               .groupBy('pa.rootid'),
+           )
+           .selectFrom('pages')
+           .innerJoin('page_data', 'page_data.rootid', 'pages.id')
+           .select((eb) => this.pageRepo.withSpace(eb))
+           .select([
+             'pages.id',
+             'pages.slugId',
+             'pages.title',
+             'pages.icon',
+             'pages.spaceId',
+             'pages.content',
+             'page_data.breadcrumbs',
+           ])
+           .where('pages.workspaceId', '=', workspaceId)
+           .where('pages.deletedAt', 'is', null)
+           .$if(
+             suggestion?.spaceId && userSpaceIds.includes(suggestion.spaceId),
+             (qb) => qb.where('pages.spaceId', '=', suggestion.spaceId),
+           )
+           .$if(
+             !userSpaceIds.includes(suggestion.spaceId) || !suggestion?.spaceId,
+             (qb) => qb.where('pages.spaceId', 'in', userSpaceIds),
+           )
+           .orderBy(
+             sql`CASE WHEN pages."space_id" = ${suggestion.spaceId} THEN 0 ELSE 1 END`,
+             'asc',
+           )
+           .limit(limit)
+           .execute();
 
-        pages = pageSearch.map((page) => ({
-          id: page.id,
-          slugId: page.slugId,
-          title: page.title,
-          icon: page.icon,
-          spaceId: page.spaceId,
-          breadcrumbs:
-            (page.breadcrumbs as { title: string }[])?.map((v) => v.title) ||
-            [],
-          headings: extractHeadingsFromContent(page.content),
-        }));
-      }
+         pages = pageSearch.map((page) => ({
+           id: page.id,
+           slugId: page.slugId,
+           title: page.title,
+           icon: page.icon,
+           spaceId: page.spaceId,
+           breadcrumbs:
+             (page.breadcrumbs as { title: string }[])?.map((v) => v.title) ||
+             [],
+           headings: extractHeadingsFromContent(page.content),
+           space: page.space,
+         }));
+       }
 
       // Filter by page-level permissions
       if (pages.length > 0) {
@@ -304,7 +310,6 @@ export class SearchService {
           await this.pagePermissionRepo.filterAccessiblePageIds({
             pageIds,
             userId,
-            spaceId: suggestion?.spaceId,
           });
         const accessibleSet = new Set(accessibleIds);
         pages = pages.filter((p) => accessibleSet.has(p.id));
