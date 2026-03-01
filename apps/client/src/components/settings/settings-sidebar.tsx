@@ -8,11 +8,7 @@ import {
   IconUsersGroup,
   IconSpaces,
   IconBrush,
-  IconCoin,
-  IconLock,
-  IconKey,
   IconWorld,
-  IconSparkles,
   IconShield,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";

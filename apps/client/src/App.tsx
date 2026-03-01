@@ -19,7 +19,6 @@ import ForgotPassword from "@/pages/auth/forgot-password.tsx";
 import PasswordReset from "./pages/auth/password-reset";
 import OidcCallbackPage from "@/pages/auth/oidc-callback.tsx";
 import { isCloud } from "@/lib/config.ts";
-import { useTranslation } from "react-i18next";
 import SharedPage from "@/pages/share/shared-page.tsx";
 import Shares from "@/pages/settings/shares/shares.tsx";
 import ShareLayout from "@/features/share/components/share-layout.tsx";
@@ -31,7 +30,6 @@ import SpaceTrash from "@/pages/space/space-trash.tsx";
 import SpacesPage from "@/pages/spaces/spaces.tsx";
 
 export default function App() {
-  const { t } = useTranslation();
   useTrackOrigin();
 
   return (

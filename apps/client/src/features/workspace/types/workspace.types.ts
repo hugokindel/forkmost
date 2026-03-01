@@ -23,6 +23,7 @@ export interface IWorkspace {
   aiSearch?: boolean;
   generativeAi?: boolean;
   disablePublicSharing?: boolean;
+  trashRetentionDays?: number;
 }
 
 export interface IWorkspaceSettings {

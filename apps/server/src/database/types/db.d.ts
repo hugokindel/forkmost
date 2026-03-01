@@ -56,6 +56,21 @@ export interface Attachments {
   workspaceId: string;
 }
 
+export interface Audit {
+  actorId: string | null;
+  actorType: Generated<string>;
+  changes: Json | null;
+  createdAt: Generated<Timestamp>;
+  event: string;
+  id: Generated<string>;
+  ipAddress: string | null;
+  metadata: Json | null;
+  resourceId: string | null;
+  resourceType: string;
+  spaceId: string | null;
+  workspaceId: string;
+}
+
 export interface AuthAccounts {
   authProviderId: string | null;
   createdAt: Generated<Timestamp>;
@@ -338,6 +353,8 @@ export interface WorkspaceInvitations {
 }
 
 export interface Workspaces {
+  auditRetentionDays: Generated<number>;
+  trashRetentionDays: Generated<number>;
   billingEmail: string | null;
   createdAt: Generated<Timestamp>;
   customDomain: string | null;
@@ -414,6 +431,7 @@ export interface PagePermissions {
 export interface DB {
   apiKeys: ApiKeys;
   attachments: Attachments;
+  audit: Audit;
   authAccounts: AuthAccounts;
   authProviders: AuthProviders;
   backlinks: Backlinks;
@@ -424,9 +442,8 @@ export interface DB {
   groupUsers: GroupUsers;
   notifications: Notifications;
   pageAccess: PageAccess;
-  pageHierarchy: PageHierarchy;
-  pageHistory: PageHistory;
   pagePermissions: PagePermissions;
+  pageHistory: PageHistory;
   pages: Pages;
   shares: Shares;
   spaceMembers: SpaceMembers;

@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Logger,
   NotFoundException,
   Param,
@@ -55,6 +56,11 @@ import * as path from 'path';
 import { AttachmentInfoDto, RemoveIconDto } from './dto/attachment.dto';
 import { AuthProviderRepo } from '../../database/repos/auth-provider/auth-provider.repo';
 import { PageAccessService } from '../page/page-access/page-access.service';
+import { AuditEvent, AuditResource } from '../../common/events/audit-events';
+import {
+  AUDIT_SERVICE,
+  IAuditService,
+} from '../../integrations/audit/audit.service';
 
 @Controller()
 export class AttachmentController {
@@ -71,6 +77,7 @@ export class AttachmentController {
     private readonly tokenService: TokenService,
     private readonly authProviderRepo: AuthProviderRepo,
     private readonly pageAccessService: PageAccessService,
+    @Inject(AUDIT_SERVICE) private readonly auditService: IAuditService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -132,6 +139,18 @@ export class AttachmentController {
         userId: user.id,
         workspaceId: workspace.id,
         attachmentId: attachmentId,
+      });
+
+      this.auditService.log({
+        event: AuditEvent.ATTACHMENT_UPLOADED,
+        resourceType: AuditResource.ATTACHMENT,
+        resourceId: fileResponse?.id ?? attachmentId,
+        spaceId,
+        metadata: {
+          fileName: fileResponse?.fileName,
+          pageId,
+          spaceId,
+        },
       });
 
       return res.send(fileResponse);

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   HttpCode,
   HttpStatus,
+  Inject,
   NotFoundException,
   Post,
   UseGuards,
@@ -35,6 +36,11 @@ import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
 import { findHighestUserSpaceRole } from '@docmost/db/repos/space/utils';
 import { SpaceRole } from 'src/common/helpers/types/permission';
 import { hasLicenseOrEE } from '../../common/helpers';
+import { AuditEvent, AuditResource } from '../../common/events/audit-events';
+import {
+  AUDIT_SERVICE,
+  IAuditService,
+} from '../../integrations/audit/audit.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('shares')
@@ -46,7 +52,8 @@ export class ShareController {
     private readonly pagePermissionRepo: PagePermissionRepo,
     private readonly pageAccessService: PageAccessService,
     private readonly environmentService: EnvironmentService,
-    private readonly spaceMemberRepo: SpaceMemberRepo
+    private readonly spaceMemberRepo: SpaceMemberRepo,
+    @Inject(AUDIT_SERVICE) private readonly auditService: IAuditService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -174,12 +181,25 @@ export class ShareController {
       throw new ForbiddenException('Public sharing is disabled');
     }
 
-    return this.shareService.createShare({
+    const share = await this.shareService.createShare({
       page,
       authUserId: user.id,
       workspaceId: workspace.id,
       createShareDto,
     });
+
+    this.auditService.log({
+      event: AuditEvent.SHARE_CREATED,
+      resourceType: AuditResource.SHARE,
+      resourceId: share.id,
+      spaceId: page.spaceId,
+      metadata: {
+        pageId: page.id,
+        spaceId: page.spaceId,
+      },
+    });
+
+    return share;
   }
 
   @HttpCode(HttpStatus.OK)
@@ -220,6 +240,19 @@ export class ShareController {
     await this.pageAccessService.validateCanEdit(page, user);
 
     await this.shareRepo.deleteShare(share.id);
+
+    this.auditService.log({
+      event: AuditEvent.SHARE_DELETED,
+      resourceType: AuditResource.SHARE,
+      resourceId: share.id,
+      spaceId: share.spaceId,
+      changes: {
+        before: {
+          pageId: share.pageId,
+          spaceId: share.spaceId,
+        },
+      },
+    });
   }
 
   @Public()
