@@ -40,6 +40,11 @@ export const AuditEvent = {
   COMMENT_CREATED: 'comment.created',
   COMMENT_DELETED: 'comment.deleted',
 
+  // Comment updates / resolve
+  COMMENT_UPDATED: 'comment.updated',
+  COMMENT_RESOLVED: 'comment.resolved',
+  COMMENT_REOPENED: 'comment.reopened',
+
   // Page
   PAGE_CREATED: 'page.created',
   PAGE_TRASHED: 'page.trashed',
@@ -47,6 +52,11 @@ export const AuditEvent = {
   PAGE_RESTORED: 'page.restored',
   PAGE_MOVED_TO_SPACE: 'page.moved_to_space',
   PAGE_DUPLICATED: 'page.duplicated',
+  // Page permission
+  PAGE_RESTRICTED: 'page.restricted',
+  PAGE_RESTRICTION_REMOVED: 'page.restriction_removed',
+  PAGE_PERMISSION_ADDED: 'page.permission_added',
+  PAGE_PERMISSION_REMOVED: 'page.permission_removed',
 
   // Share
   SHARE_CREATED: 'share.created',
@@ -71,17 +81,6 @@ export const AuditEvent = {
   LICENSE_ACTIVATED: 'license.activated',
   LICENSE_REMOVED: 'license.removed',
 
-  // Page permission
-  PAGE_RESTRICTED: 'page.restricted',
-  PAGE_RESTRICTION_REMOVED: 'page.restriction_removed',
-  PAGE_PERMISSION_ADDED: 'page.permission_added',
-  PAGE_PERMISSION_REMOVED: 'page.permission_removed',
-
-  // Comment updates / resolve
-  COMMENT_UPDATED: 'comment.updated',
-  COMMENT_RESOLVED: 'comment.resolved',
-  COMMENT_REOPENED: 'comment.reopened',
-
   // Attachment
   ATTACHMENT_UPLOADED: 'attachment.uploaded',
   // ATTACHMENT_DELETED: 'attachment.deleted',
@@ -90,8 +89,13 @@ export const AuditEvent = {
 export type AuditEventType = (typeof AuditEvent)[keyof typeof AuditEvent];
 
 export const EXCLUDED_AUDIT_EVENTS: Set<string> = new Set([
-  // AuditEvent.PAGE_MOVED_TO_SPACE,
-  //AuditEvent.PAGE_DUPLICATED,
+  AuditEvent.PAGE_CREATED,
+  AuditEvent.PAGE_MOVED_TO_SPACE,
+  AuditEvent.PAGE_DUPLICATED,
+  AuditEvent.COMMENT_CREATED,
+  AuditEvent.COMMENT_UPDATED,
+  AuditEvent.COMMENT_RESOLVED,
+  AuditEvent.COMMENT_REOPENED,
 ]);
 
 export const AuditResource = {
