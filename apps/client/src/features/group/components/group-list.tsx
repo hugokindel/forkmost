@@ -1,7 +1,6 @@
 import { Table, Group, Text, Anchor } from "@mantine/core";
 import { useGetGroupsQuery } from "@/features/group/queries/group-query";
 import { Link } from "react-router-dom";
-import { useCursorPaginate } from "@/hooks/use-cursor-paginate";
 import { IconGroupCircle } from "@/components/icons/icon-people-circle.tsx";
 import { useTranslation } from "react-i18next";
 import { formatMemberCount } from "@/lib";
@@ -11,11 +10,14 @@ import { queryClient } from "@/main.tsx";
 import { getGroupMembers } from "@/features/group/services/group-service.ts";
 import { AutoTooltipText } from "@/components/ui/auto-tooltip-text.tsx";
 import useUserRole from "@/hooks/use-user-role.tsx";
+import { SearchInput } from "@/components/common/search-input.tsx";
+import NoTableResults from "@/components/common/no-table-results.tsx";
+import { usePaginateAndSearch } from "@/hooks/use-paginate-and-search.tsx";
 
 export default function GroupList() {
   const { t } = useTranslation();
-  const { cursor, goNext, goPrev } = useCursorPaginate();
-  const { data, isLoading } = useGetGroupsQuery({ cursor });
+  const { search, cursor, goNext, goPrev, handleSearch } = usePaginateAndSearch();
+  const { data, isLoading } = useGetGroupsQuery({ cursor, query: search });
   const { isAdmin } = useUserRole();
 
   const prefetchGroupMembers = (groupId: string) => {
@@ -27,6 +29,7 @@ export default function GroupList() {
 
   return (
     <>
+      <SearchInput onSearch={handleSearch} />
       <Table.ScrollContainer minWidth={500}>
         <Table highlightOnHover verticalSpacing="sm" layout="fixed">
           <Table.Thead>
@@ -37,7 +40,8 @@ export default function GroupList() {
           </Table.Thead>
 
           <Table.Tbody>
-            {data?.items.map((group: IGroup, index: number) => {
+            {data?.items.length > 0 ? (
+            data?.items.map((group: IGroup, index: number) => {
               const groupDisplay = (
                 <Group gap="sm" wrap="nowrap">
                   <IconGroupCircle />
@@ -93,7 +97,10 @@ export default function GroupList() {
                   </Table.Td>
                 </Table.Tr>
               );
-            })}
+            })
+            ) : (
+              <NoTableResults colSpan={2} />
+            )}
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
