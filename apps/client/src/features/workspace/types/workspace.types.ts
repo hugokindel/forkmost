@@ -25,6 +25,7 @@ export interface IWorkspace {
   disablePublicSharing?: boolean;
   mcpEnabled?: boolean;
   trashRetentionDays?: number;
+  restrictApiToAdmins?: boolean;
 }
 
 export interface IWorkspaceSettings {
