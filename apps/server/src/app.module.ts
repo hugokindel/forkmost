@@ -25,6 +25,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import { LoggerModule } from './common/logger/logger.module';
 import { ClsModule } from 'nestjs-cls';
+import { NoopAuditModule } from './integrations/audit/audit.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ClsModule } from 'nestjs-cls';
       middleware: { mount: true },
     }),
     LoggerModule,
+    NoopAuditModule,
     CoreModule,
     DatabaseModule,
     EnvironmentModule,
